@@ -154,9 +154,9 @@ def add_hostinfo():
 					keypath_TF=False
 					break
 	#######commit####
-	sql_add = "INSERT INTO sshhostlist(host,username, port, iskey, keypath,hostdesc) VALUES ('%s', '%s', '%s', %d, '%s', '%s' )" % (host, username, hport, iskey, keypath,hostdesc)
+	sql_add = "INSERT INTO sshhostlist(host,username, port, iskey, keypath,hostdesc) VALUES ('%s', '%s', '%s', %s, '%s', '%s' )" % (host, username, hport, iskey, keypath,hostdesc)
 	echo("sql_add:")
-	echo(sql_add)
+	#echo(sql_add)
 	try:
 	   db.execute(sql_add)
 	   conn.commit()
@@ -169,8 +169,8 @@ def delhostbyid(hid):
 	#判断是否为数字
 	del_isnum=is_num_by_except(hid)
 	if del_isnum:
-		sql_del="delete from sshhostlist where id=%d" % (hid)
-		echo(sql_del)
+		sql_del="delete from sshhostlist where id=%s" % (hid)
+		#echo(sql_del)
 		try:
 		   db.execute(sql_del)
 		   conn.commit()
@@ -200,13 +200,13 @@ else:
 			add_hostinfo()
 		elif sys.argv[ii] == '-d' or sys.argv[ii] == 'del':
 			fun_query_list()
-			delhostid=cyinput("请输入ID号:")
-			echo(inputhostid)
+			del_hostid=cyinput("请输入ID号:")
+			#######
 			#判断是否为数字
-			rsdel_isnum=is_num_by_except(delhostid)
+			rsdel_isnum=is_num_by_except(del_hostid)
 			if rsdel_isnum:
 				#echo("输入是数字")
-				delhostbyid(delhostid)
+				delhostbyid(del_hostid)
 			else:
 				echo("ERROR：Please enter a number^_^")
 		else:
