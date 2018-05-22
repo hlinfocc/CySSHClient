@@ -80,9 +80,9 @@ def fun_query_list():
 		#print("ID=%d. -p%s %s@%s,iskey=%d,keypath=%s"% (hid, hhport, username, host, iskey, keypath ))
 		echo('\033[1;36;40m','')
 		if iskey == 0:
-			echo("ID=%d【%s】\t -p%s %s@%s,iskey=%d,keypath=%s"% (hid,hostdesc, hhport, username, host, iskey, keypath ))
+			echo("ID=%d【%s】\t -p%s %s@%s"% (hid,hostdesc, hhport, username, host))
 		else:
-			echo("ID=%d【%s】\t -p%s %s@%s -i %s,iskey=%d,keypath=%s"% (hid,hostdesc, hhport, username, host, keypath, iskey, keypath ))
+			echo("ID=%d【%s】\t -p%s %s@%s -i %s"% (hid,hostdesc, hhport, username, host, keypath))
 		echo('\033[0m','')
 #########Query list end #########
 ######### function query one by ID begin############
@@ -93,23 +93,26 @@ def fun_queryoneById(hostid):
 	res = db.fetchall()
 	for row in res:
 		hid = row[0]
-    		host = row[1]
-    		username = row[2]
-    		hhport = row[3]
-    		iskey = row[4]
-	    	keypath = row[5]
-    		hostdesc = row[6]
-		if iskey == 0:
-        		echo("ID=%d【%s】\t -p%s %s@%s,iskey=%d,keypath=%s"% (hid,hostdesc, hhport, username, host, iskey, keypath ))
-			#os.system('ssh -p63924 root@39.108.74.233')
-    		else:
-        		echo("ID=%d【%s】\t -p%s %s@%s -i %s,iskey=%d,keypath=%s"% (hid,hostdesc, hhport, username, host, keypath, iskey, keypath ))
-			#
-
+		host = row[1]
+		username = row[2]
+		hhport = row[3]
+		is_key = row[4]
+		keypath = row[5]
+		hostdesc = row[6]
+		if is_key == 0:
+			echo("正在尝试登录 ID=%d【%s】\t -p%s %s@%s"% (hid,hostdesc, hhport, username, host))
+			cmd_pwd="ssh -p%s %s@%s" % (hhport, username, host)
+			os.system(cmd_pwd)
+			sys.exit(0)
+    	else:
+			echo("正在尝试登录 ID=%d【%s】\t -p%s %s@%s -i %s"% (hid,hostdesc, hhport, username, host, keypath))
+			cmd_keypath="ssh -p%s %s@%s -i %s" % (hhport, username, host,keypath)
+			os.system(cmd_pwd)
+			sys.exit(0)
 ######### function query one by ID END############
 ##############接收ID,查询一条数据###############
 def inputid_queryone():
-	inputhostid=cyinput("请输入ID号:")
+	inputhostid=cyinput("请输入需要登录的主机ID号:")
 	#echo(inputhostid)
 	#判断是否为数字
 	rs_isnum=is_num_by_except(inputhostid)
@@ -200,7 +203,7 @@ else:
 			add_hostinfo()
 		elif sys.argv[ii] == '-d' or sys.argv[ii] == 'del':
 			fun_query_list()
-			del_hostid=cyinput("请输入ID号:")
+			del_hostid=cyinput("请输入需要删除的主机ID号:")
 			#######
 			#判断是否为数字
 			rsdel_isnum=is_num_by_except(del_hostid)
