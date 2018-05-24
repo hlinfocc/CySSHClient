@@ -107,7 +107,7 @@ def fun_queryoneById(hostid):
     	else:
 			echo("正在尝试登录 ID=%d【%s】\t -p%s %s@%s -i %s"% (hid,hostdesc, hhport, username, host, keypath))
 			cmd_keypath="ssh -p%s %s@%s -i %s" % (hhport, username, host,keypath)
-			os.system(cmd_pwd)
+			os.system(cmd_keypath)
 			sys.exit(0)
 ######### function query one by ID END############
 ##############接收ID,查询一条数据###############
@@ -130,15 +130,17 @@ def add_hostinfo():
 	host=cyinput("please enter hostname(domain or IP):")
 	username=cyinput("Please enter username[default:root]:")
 	hport=cyinput("Please enter Port[default:22]:")
-	iskeyok=cyinput("是否SSH证书登录[Y/N]:")
-	hostdesc=cyinput("请输入主机描述:")
+	iskeyok=cyinput("是否SSH证书登录[default:No]?[Y/N]:")
 	iskey=0
 	keypath=''
+	if len(iskeyok) == 0:
+		iskeyok='N'
 	if iskeyok == 'Y' or iskeyok == 'y' or iskeyok== 'yes':
 		iskey=1
 		keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
 	else:
 		iskey=0
+	hostdesc=cyinput("请输入主机描述:")
 	while len(host)==0:
 		host=cyinput("please enter hostname(domain or IP):")
 	if len(username) == 0:
@@ -149,16 +151,16 @@ def add_hostinfo():
 		keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
 		keypath_TF=True
 		while keypath_TF:
-			if os.path.isfile("keypath"):
+			if os.path.isfile(keypath):
 				break
 			else:
 				keypath=cyinput("请输入正确的ssh证书完整路径[包含证书文件名]:")
-				if os.path.isfile("keypath"):
+				if os.path.isfile(keypath):
 					keypath_TF=False
 					break
 	#######commit####
 	sql_add = "INSERT INTO sshhostlist(host,username, port, iskey, keypath,hostdesc) VALUES ('%s', '%s', '%s', %s, '%s', '%s' )" % (host, username, hport, iskey, keypath,hostdesc)
-	echo("sql_add:")
+	#echo("sql_add:")
 	#echo(sql_add)
 	try:
 	   db.execute(sql_add)
@@ -166,7 +168,72 @@ def add_hostinfo():
 	   echo("add host info success!")
 	except:
 	   conn.rollback()
+	   echo("add host info is failed!")
 ########### add one host info end###########
+############ update one host info start###########
+def update_hostinfo(hostid):
+	sql1="select * from sshhostlist where id=%s" % (hostid)
+	db.execute(sql1)
+	res = db.fetchall()
+	for row in res:
+		ohid = row[0]
+		ohost = row[1]
+		ousername = row[2]
+		ohhport = row[3]
+		ois_key = row[4]
+		okeypath = row[5]
+		ohostdesc = row[6]
+		echo("请输入需要修改的信息，不修改的项留空，直接回车^_^")
+		host=cyinput("please enter if update hostname(domain or IP)[%s]:" % (ohost))
+		username=cyinput("Please enter if update username[%s]:" % (ousername))
+		hport=cyinput("Please enter if update Port[%s]:" % (ohhport))
+		ois_key_txt=""
+		if ois_key == 0:
+			ois_key_txt="当前没有设置SSH证书，是否设置[default:No]?[Y/N]:"
+		else:
+			ois_key_txt="当前已经有SSH证书，是否重新设置[default:No]?[Y/N]:"
+		iskeyok=cyinput("%s" % (ois_key_txt))
+		iskey=0
+		keypath=''
+		if len(iskeyok) == 0:
+			iskeyok='N'
+		if iskeyok == 'Y' or iskeyok == 'y' or iskeyok== 'yes':
+			iskey=1
+			keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
+		else:
+			iskey=0
+		if len(host) == 0:
+			host=ohost
+		if len(username) == 0:
+			username=ousername
+		if len(hport) == 0 :
+			hport=ohhport
+		if iskey == 1:
+			keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
+			keypath_TF=True
+			while keypath_TF:
+				if os.path.isfile(keypath):
+					break
+				else:
+					keypath=cyinput("请输入正确的ssh证书完整路径[包含证书文件名]:")
+					if os.path.isfile(keypath):
+						keypath_TF=False
+						break
+		else:
+			keypath=okeypath
+		hostdesc=cyinput("please enter if update Host description[%s]:" % (ohostdesc))
+		if len(hostdesc) == 0 :
+			hostdesc=ohostdesc
+		#######commit####
+		sql_update = "update sshhostlist set host='%s',username='%s', port='%s', iskey=%s, keypath='%s',hostdesc='%s' where id=%s" % (host, username, hport, iskey, keypath,hostdesc,hostid)
+		try:
+		   db.execute(sql_update)
+		   conn.commit()
+		   echo("update host[ID=%s] info success!" % (hostid))
+		except:
+		   conn.rollback()
+		   echo("update host[ID=%s] info is failed!" % (hostid))
+########### update one host info end###########
 ########### fun delete host by id start########
 def delhostbyid(hid):
 	#判断是否为数字
@@ -180,6 +247,7 @@ def delhostbyid(hid):
 		   echo("delete host[ID=%d] success!"% (hid))
 		except:
 		   conn.rollback()
+		   echo("delete host info is failed!")
 	else:
 		echo("ERROR：Please enter a number^_^")
 ########### fun delete host by id end########
@@ -187,10 +255,12 @@ def delhostbyid(hid):
 def _help():
 	echo("Usage: %s [Options]" % (sys.argv[0]))
 	echo("Options:")
-	echo("	-?,-h,-help \t :this help")
+	echo("	-?,-h,-help,--help \t :this help")
 	echo("	-add,add \t :add a host info")
-	echo("	-d,del \t :del a host info")
+	echo("	-d,del \t :del One host info By ID")
+	echo("	-r,update,reset \t :update One host info By ID")
 ############### help end ##########################
+##main():
 if argvlen==1:
 	fun_query_list()
 	inputid_queryone()
@@ -212,8 +282,19 @@ else:
 				delhostbyid(del_hostid)
 			else:
 				echo("ERROR：Please enter a number^_^")
+		elif sys.argv[ii] == '-r' or sys.argv[ii] == 'update' or sys.argv[ii] == 'reset':
+			fun_query_list()
+			update_hostid=cyinput("请输入需要修改的主机ID号:")
+			#######
+			#判断是否为数字
+			rsup_isnum=is_num_by_except(update_hostid)
+			if rsup_isnum:
+				#echo("输入是数字")
+				update_hostinfo(update_hostid)
+			else:
+				echo("ERROR：Please enter a number^_^")
 		else:
-			echo("Usage: %s -h" % (sys.argv[0]))
+			echo("you can usage: %s -h lookup the help" % (sys.argv[0]))
 			fun_query_list()
 			inputid_queryone()
 #################
