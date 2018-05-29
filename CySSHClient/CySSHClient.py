@@ -267,6 +267,7 @@ def _help():
 	echo("	-add,add \t :add a host info")
 	echo("	-d,del \t :del One host info By ID")
 	echo("	-r,update,reset \t :update One host info By ID")
+	echo("	-q \t :query All  host list")
 ############### help end ##########################
 ##main():
 if argvlen==1:
@@ -301,6 +302,8 @@ else:
 				update_hostinfo(update_hostid)
 			else:
 				echo("ERROR：Please enter a number^_^")
+		elif sys.argv[ii] == '-q':
+			fun_query_list()
 		else:
 			echo("you can usage: %s -h lookup the help" % (sys.argv[0]))
 			fun_query_list()
