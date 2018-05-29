@@ -39,15 +39,21 @@ def is_num_by_except(num):
 			return False '''
 		int(num)
 		return True
-	except ValueError:
+	except (ValueError,TypeError):
 		print("ERROR: the '%s' is not number" % (num))
 		return False
 ###########getconsole input ############
 def cyinput(txt):
 	if PY3V:
-		return input(txt)
+		try:
+			return input(txt)
+		except (KeyboardInterrupt,TypeError):
+			echo("\nNo information was entered^_^")
 	else:
-		return raw_input(txt)
+		try:
+			return raw_input(txt)
+		except (KeyboardInterrupt,TypeError):
+			echo("\nNo information was entered^_^")
 ####DB conn#######
 dbpwd = sys.path[0]+'/cyssh.db'
 #echo(dbpwd)
@@ -147,17 +153,18 @@ def add_hostinfo():
 		username='root'
 	if len(hport) == 0 :
 		hport='22'
-	if iskey == 1:
-		keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
-		keypath_TF=True
-		while keypath_TF:
-			if os.path.isfile(keypath):
-				break
-			else:
-				keypath=cyinput("请输入正确的ssh证书完整路径[包含证书文件名]:")
+	if iskey == 1 and len(keypath) == 0:
+		if not(os.path.isfile(keypath)):
+			keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
+			keypath_TF=True
+			while keypath_TF:
 				if os.path.isfile(keypath):
-					keypath_TF=False
 					break
+				else:
+					keypath=cyinput("请输入正确的ssh证书完整路径[包含证书文件名]:")
+					if os.path.isfile(keypath):
+						keypath_TF=False
+						break
 	#######commit####
 	sql_add = "INSERT INTO sshhostlist(host,username, port, iskey, keypath,hostdesc) VALUES ('%s', '%s', '%s', %s, '%s', '%s' )" % (host, username, hport, iskey, keypath,hostdesc)
 	#echo("sql_add:")
@@ -209,16 +216,17 @@ def update_hostinfo(hostid):
 		if len(hport) == 0 :
 			hport=ohhport
 		if iskey == 1:
-			keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
-			keypath_TF=True
-			while keypath_TF:
-				if os.path.isfile(keypath):
-					break
-				else:
-					keypath=cyinput("请输入正确的ssh证书完整路径[包含证书文件名]:")
+			if not(os.path.isfile(keypath)):
+				keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
+				keypath_TF=True
+				while keypath_TF:
 					if os.path.isfile(keypath):
-						keypath_TF=False
 						break
+					else:
+						keypath=cyinput("请输入正确的ssh证书完整路径[包含证书文件名]:")
+						if os.path.isfile(keypath):
+							keypath_TF=False
+							break
 		else:
 			keypath=okeypath
 		hostdesc=cyinput("please enter if update Host description[%s]:" % (ohostdesc))
