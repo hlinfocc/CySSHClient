@@ -267,6 +267,8 @@ def add_hostinfo():
 	if iskeyok == 'y' or iskeyok== 'yes':
 		iskey=1
 		isdefkeyok=cyinput("是否已保存证书[default:Yes]?[Y/N]:")
+  		if len(isdefkeyok) == 0:
+			isdefkeyok='y'
   		isdefkeyok.lower()
   		if isdefkeyok == 'y' or isdefkeyok== 'yes':
         		isUserDefkey=1
@@ -288,7 +290,7 @@ def add_hostinfo():
 		username='root'
 	if len(hport) == 0 :
 		hport='22'
-	if iskey == 1 and len(keypath) == 0:
+	if iskey == 1 and isUserDefkey == 0:
 		if not(os.path.isfile(keypath)):
 			keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
 			keypath_TF=True
@@ -300,14 +302,13 @@ def add_hostinfo():
 					if os.path.isfile(keypath):
 						keypath_TF=False
 						break
-	#######commit####
-	if iskey == 1 and isUserDefkey == 0:
 		rs_add=pemkey_write2db(keypath)
 		if rs_add:
 			keypath=rs_add
 		else:
 			echo("add host info failed,please try again")
 			sys.exit(0)
+   	#######commit####
 	sql_add = "INSERT INTO sshhostlist(host,username, port, iskey, keypath,hostdesc) VALUES ('%s', '%s', '%s', %s, '%s', '%s' )" % (host, username, hport, iskey, keypath,hostdesc)
 	#echo("sql_add:")
 	#echo(sql_add)
@@ -348,19 +349,21 @@ def update_hostinfo(hostid):
 			iskeyok='N'
 		iskeyok.lower()
   		isUserDefkey=0
-		if iskeyok == 'y' or iskeyok== 'yes':
-			iskey=1
+		if iskeyok == 'y' or iskeyok== 'yes': ###重新设置
+			iskey=1 #重新设置的标识
 			isdefkeyok=cyinput("是否已保存证书[default:Yes]?[Y/N]:")
 	  		isdefkeyok.lower()
 	  		if isdefkeyok == 'y' or isdefkeyok== 'yes':
-         			isUserDefkey=1
+         			isUserDefkey=1 #已保存证书的标识
 				fun_query_sshkey_list()
-	   			keypath=cyinput("请输入证书ID:")
-	      			rskid_isnum=is_num_by_except(keypath)
+	   			keypath_id=cyinput("请输入证书ID:")
+				keypath = keypath_id
+	      			rskid_isnum=is_num_by_except(keypath_id)
 				while not rskid_isnum:
-					keypath=cyinput("请输入正确的证书ID:")
-	    				rskid_isnum=is_num_by_except(keypath)
+					keypath_id=cyinput("请输入正确的证书ID:")
+	    				rskid_isnum=is_num_by_except(keypath_id)
 	    				if rskid_isnum:
+             					keypath = keypath_id
 		    				break;
 	   		else:
 				keypath=cyinput("请输入ssh免密码登录证书完整路径[包含证书文件名]:")
@@ -373,18 +376,18 @@ def update_hostinfo(hostid):
 		if len(hport) == 0 :
 			hport=ohhport
 		if iskey == 1:
-			if not(os.path.isfile(keypath)):
-				keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
-				keypath_TF=True
-				while keypath_TF:
-					if os.path.isfile(keypath):
-						break
-					else:
-						keypath=cyinput("请输入正确的ssh证书完整路径[包含证书文件名]:")
+      			if isUserDefkey == 0:
+				if not(os.path.isfile(keypath)):
+					keypath=cyinput("请输入ssh证书完整路径[包含证书文件名]:")
+					keypath_TF=True
+					while keypath_TF:
 						if os.path.isfile(keypath):
-							keypath_TF=False
 							break
-			if isUserDefkey == 0:
+						else:
+							keypath=cyinput("请输入正确的ssh证书完整路径[包含证书文件名]:")
+							if os.path.isfile(keypath):
+								keypath_TF=False
+								break
 				rs_add=pemkey_write2db(keypath)
 			 	if rs_add:
 			      		keypath=rs_add
@@ -397,7 +400,6 @@ def update_hostinfo(hostid):
 		if len(hostdesc) == 0 :
 			hostdesc=ohostdesc
 		#######commit####
-
 		sql_update = "update sshhostlist set host='%s',username='%s', port='%s', iskey=%s, keypath='%s',hostdesc='%s' where id=%s" % (host, username, hport, iskey, keypath,hostdesc,hostid)
 		try:
 			db.execute(sql_update)
@@ -432,7 +434,7 @@ def delsshkeyfilebyid(kid):
 		sql_delkcount="select count(*) from sshhostlist where keypath=%d" % (string2int(kid))
 		db.execute(sql_delkcount)
 		keycount4hostdb = db.fetchall()[0]
-		if keycount4hostdb < 1 :
+		if keycount4hostdb > 0 :
       			echo("ERROR: The key already exist host list!")
          		sys.exit(0)
 		sql_delk="delete from sshkeylist where id=%d" % (string2int(kid))
