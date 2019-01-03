@@ -96,7 +96,7 @@ def pemkey_read4db(keyid):
 	for row in res:
 		privatekey = row[0]
 		keyname = row[1]
-		fi = open(pvkpath, "w+")
+		#fi = open(pvkpath, "w+")
   		with open(pvkpath, 'w+') as fi:
 			o = fi.write(privatekey)
     		if not PY3V:
@@ -113,8 +113,11 @@ def pemkey_read4db(keyid):
 ########### function:pemkey_write2db ##################
 def pemkey_write2db(keypath):
  	filename = os.path.basename(keypath)
-  	with open(keypath, 'w+') as fo:
+  	with open(keypath, 'r+') as fo:
 		keydata = fo.read(-1)
+  	if keydata.strip() == '':
+		echo("error:%s content is null" % filename)
+		sys.exit(0)
  	sql_addkey="insert into sshkeylist(keyname,privatekey) values ('%s','%s')" % (filename,keydata)
 	try:
 		db.execute(sql_addkey)
@@ -426,6 +429,12 @@ def delsshkeyfilebyid(kid):
 	#判断是否为数字
 	del_isnum=is_num_by_except(kid)
 	if del_isnum:
+		sql_delkcount="select count(*) from sshhostlist where keypath=%d" % (string2int(kid))
+		db.execute(sql_delkcount)
+		keycount4hostdb = db.fetchall()[0]
+		if keycount4hostdb < 1 :
+      			echo("ERROR: The key already exist host list!")
+         		sys.exit(0)
 		sql_delk="delete from sshkeylist where id=%d" % (string2int(kid))
 		echo(sql_delk)
 		try:
