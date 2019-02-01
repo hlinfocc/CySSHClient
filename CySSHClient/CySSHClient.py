@@ -76,6 +76,11 @@ except:
 	echo("Error: open file %s failed, Permission denied" % (dbpwd))
  	sys.exit(0)
 
+######### check databases file is have writable ##########
+def dbis_writable():
+    if not os.access(dbpwd,os.W_OK):
+        echo("Warning: database files[%s] do not have writable permissions for current users" % dbpwd)
+
 ####request console parameter################
 argvlen=len(sys.argv)
 #print(m)
@@ -112,6 +117,8 @@ def pemkey_read4db(keyid):
 ########### function:pemkey_read4db  END ###############
 ########### function:pemkey_write2db ##################
 def pemkey_write2db(keypath):
+    	if not os.access(keypath,os.R_OK):
+        	echo("Warning: The file[%s] do not have readable permissions for current users" % keypath)
  	filename = os.path.basename(keypath)
   	with open(keypath, 'r+') as fo:
 		keydata = fo.read(-1)
@@ -472,6 +479,7 @@ def main():
 			if sys.argv[ii] == '-?' or sys.argv[ii] == '-h' or sys.argv[ii] == '-help' or sys.argv[ii] == '--help' :
 				_help()
 			elif sys.argv[ii] == '-add' or sys.argv[ii] == 'add':
+       				dbis_writable()
 				add_hostinfo()
 			elif sys.argv[ii] == '-d' or sys.argv[ii] == '-del' or sys.argv[ii] == 'del':
 				fun_query_list()
@@ -481,10 +489,12 @@ def main():
 				rsdel_isnum=is_num_by_except(del_hostid)
 				if rsdel_isnum:
 					#echo("输入是数字")
+					dbis_writable()
 					delhostbyid(del_hostid)
 				else:
 					echo("ERROR：Please enter a number^_^")
 			elif sys.argv[ii] == '-m' or sys.argv[ii] == 'update' or sys.argv[ii] == 'modify':
+       				dbis_writable()
 				fun_query_list()
 				update_hostid=cyinput("请输入需要修改的主机ID号:")
 				#######
@@ -500,8 +510,10 @@ def main():
     			elif sys.argv[ii] == '-k':
            			fun_query_sshkey_list()
               		elif sys.argv[ii] == '-ka':
+                    		dbis_writable()
                     		fun_sshkey_file_add()
                       	elif sys.argv[ii] == '-kd':
+                           	dbis_writable()
                     		fun_query_sshkey_list()
 				del_keyid=cyinput("请输入需要删除的主机ID号:")
 				#######

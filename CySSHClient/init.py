@@ -36,7 +36,9 @@ try:
 except:
 	echo("Error: open file %s failed, Permission denied" % (dbpwd))
  	sys.exit(0)
-
+def is_writable():
+    if not os.access(dbpwd,os.W_OK):
+        echo("Warning, database files[%s] do not have writable permissions for current users" % dbpwd)
 
 def create_sshhostlist():
 	try:
@@ -77,6 +79,7 @@ def create_sshkeylist():
 
 
 if __name__ == "__main__":
+    	is_writable()
 	a = create_sshhostlist()
 	b = create_sshkeylist()
 	if a and b:
