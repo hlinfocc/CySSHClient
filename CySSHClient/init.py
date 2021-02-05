@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
@@ -66,7 +66,8 @@ def create_sshkeylist():
 		CREATE TABLE IF NOT EXISTS sshkeylist (
 		id  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 		keyname  TEXT,
-		privatekey  TEXT
+		privatekey  TEXT,
+		publickey TEXT
 		);
 		'''
 		db.execute(create_tb_cmd)
@@ -76,17 +77,35 @@ def create_sshkeylist():
 	except:
 		#echo("Create table sshkeylist failed")
 		return False
-
+def chkField_isset():
+	try:
+		sql='''
+		select sql from sqlite_master where type = 'table' and name = 'sshkeylist';
+		'''
+		db.execute(sql)
+  		res = db.fetchall()
+    		#echo(res[0][0])
+      		#echo(res[0][0].find("publickey"))
+        	pkstrisok = res[0][0].find("publickey")
+        	if pkstrisok < 0 :
+			db.execute("alter table sshkeylist add column publickey TEXT")
+  			conn.commit()
+     			return True
+    		#echo("add column OK")
+  		return True
+	except:
+		#echo("add column failed")
+		return False
 
 if __name__ == "__main__":
     	dbis_writable()
 	a = create_sshhostlist()
 	b = create_sshkeylist()
+ 	chkField_isset()
 	if a and b:
 		echo("CySSHClient: init databases successful")
   	else:
 		echo("CySSHClient: init databases failed")
-
 
 #################
 db.close()
