@@ -7,7 +7,7 @@ import sys
 import os
 import re
 import string
-import prettytable as ptb
+from prettytable import PrettyTable as ptb
 import getpass
 ########################################################
 ##  Copyright © 红楼信息hlinfo.net All Rights Reserved
