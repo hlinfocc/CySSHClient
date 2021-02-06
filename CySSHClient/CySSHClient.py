@@ -7,7 +7,7 @@ import sys
 import os
 import re
 import string
-from prettytable import PrettyTable as ptb
+import prettytable as ptb
 import getpass
 ########################################################
 ##  Copyright © 红楼信息hlinfo.net All Rights Reserved
@@ -111,7 +111,7 @@ def pemkey_read4db(keyid):
         privatekey = row[0]
         keyname = row[1]
         #fi = open(pvkpath, "w+")
-        pvkpath = pvkdir + keyname
+        pvkpath = pvkdir + keyname + keyid
         with open(pvkpath, 'w+') as fi:
             o = fi.write(privatekey)
         if not PY3V:
@@ -180,7 +180,7 @@ def fun_query_sshkey_list():
         keyname = row[1]
         privatekey = row[2]
         keytb.add_row(["%s" % kid,"%s" % keyname])
-    echo('\033[1;33m','')
+    echo('\033[1;44;37m','')
     echo(keytb)
     echo('\033[0m','')
 #########Fun:query sshkey list END#########
@@ -275,7 +275,7 @@ def fun_query_list():
             identity_file = rspkinfo[2]
             is_identity_file="YES"
         htb.add_row(["%d" % hid,"%s" % hostdesc,"%s" % hhport,"%s@%s" % (username,host),"%s" % identity_file])
-        echo('\033[1;36;40m','')
+        echo('\033[1;44;37m','')
         htb.align["description"] = "l"
     echo(htb)
     echo('\033[0m','')
@@ -579,7 +579,7 @@ def delsshkeyfilebyid(kid):
 ########### fun delete sshkey by id end########
 ########### function:syncPubKey2RemoteHost begin###############
 def syncPubKey2RemoteHost(keyid,port,user,host):
-    sql1="select publickey,keyname from sshkeylist where id=%d" % (string2int(keyid))
+    sql1="select publickey,keyname,privatekey from sshkeylist where id=%d" % (string2int(keyid))
     db.execute(sql1)
     res = db.fetchall()
     now_user = getpass.getuser()
@@ -588,22 +588,25 @@ def syncPubKey2RemoteHost(keyid,port,user,host):
         pvkdir='/root/.cyssh/'
     else:
         pvkdir='/home/%s/.cyssh/' % now_user
-
     if not os.path.exists(pvkdir):
         os.makedirs(pvkdir)
     #pvkpath="/tmp/hlinfosshpvkey-%s.pem" % now_user
     for row in res:
         publickey = row[0]
         keyname = row[1]
+        privatekey = row[2]
         #fi = open(pvkpath, "w+")
-        pvkpath = pvkdir + keyname + ".pub"
+        privatePath = pvkdir + keyname + keyid
+        with open(privatePath, 'w+') as fi:
+            o = fi.write(privatekey)
+        pvkpath = pvkdir + keyname + keyid + ".pub"
         with open(pvkpath, 'w+') as fi:
             o = fi.write(publickey)
         if not PY3V:
-                o=1
+            o=1
         if o > 0:
-            cmd_chmod="chmod 600 %s" % pvkpath
-            os.system(cmd_chmod)
+            os.system("chmod 600 %s" % privatePath)
+            os.system("chmod 600 %s" % pvkpath)
             sshcopyid="/usr/bin/ssh-copy-id -i %s -p %s %s@%s" % (pvkpath,port,user,host)
             rsstatus = os.system(sshcopyid)
             return rsstatus
@@ -635,7 +638,7 @@ def syncPubKeyQueryKey(hostid):
             if resultKey:
                 sshkeyid = keypath_id
                 break;
-        rsok = syncPubKey2RemoteHost(sshkeyid,hhport,username,host,hostid)
+        rsok = syncPubKey2RemoteHost(sshkeyid,hhport,username,host)
         if rsok == 0:
             sql_update = "update sshhostlist set iskey=%s, keypath='%s' where id=%s" % (1, sshkeyid, hostid)
             try:
@@ -677,9 +680,8 @@ def main():
                 del_hostid=cyinput("请输入需要删除的主机ID号:")
                 #######
                 #判断是否为数字
-                rsdel_isnum=is_num_by_except(del_hostid)
+                rsdel_isnum=checkHostExists(del_hostid)
                 if rsdel_isnum:
-                    #echo("输入是数字")
                     dbis_writable()
                     delhostbyid(del_hostid)
                 else:
@@ -690,12 +692,12 @@ def main():
                 update_hostid=cyinput("请输入需要修改的主机ID号:")
                 #######
                 #判断是否为数字
-                rsup_isnum=is_num_by_except(update_hostid)
+                #rsup_isnum=is_num_by_except(update_hostid)
+                rsup_isnum=checkHostExists(syncHostId)
                 if rsup_isnum:
-                    #echo("输入是数字")
                     update_hostinfo(update_hostid)
                 else:
-                    echo("ERROR：Please enter a number^_^")
+                    echo("ERROR：Please enter real host ID^_^")
             elif sys.argv[ii] == '-q':
                 fun_query_list()
             elif sys.argv[ii] == '-k':
@@ -706,18 +708,18 @@ def main():
             elif sys.argv[ii] == '-kd':
                 dbis_writable()
                 fun_query_sshkey_list()
-                del_keyid=cyinput("请输入需要删除的主机ID号:")
+                delKeyId=cyinput("请输入需要删除的密钥对ID号:")
                 #######
                 #判断是否为数字
-                rsdel_isnum=is_num_by_except(del_keyid)
+                rsdel_isnum=checkIdentityFile(delKeyId)
                 if rsdel_isnum:
                     #echo("输入是数字")
-                    delsshkeyfilebyid(del_keyid)
+                    delsshkeyfilebyid(delKeyId)
                 else:
                     echo("ERROR：Please enter a number^_^")
             elif sys.argv[ii] == '-kr':
                 dbis_writable()
-                fun_query_sshkey_list()
+                fun_query_list()
                 syncHostId = cyinput("请输入需要同步密钥的主机ID号:")
                 rs = checkHostExists(syncHostId)
                 if rs:
@@ -725,8 +727,12 @@ def main():
                 else:
                     echo("ERROR：请输入正确的主机ID号^_^")
             elif is_num_by_except(sys.argv[ii]):
-                fun_query_list()
-                fun_queryoneById(sys.argv[ii])
+                rsIsHost = checkHostExists(sys.argv[ii])
+                if rsIsHost:
+                    fun_queryoneById(sys.argv[ii])
+                else:
+                    fun_query_list()
+                    inputid_queryone()
             else:
                 echo("you can usage: %s -h lookup the help" % (sys.argv[0]))
                 fun_query_list()

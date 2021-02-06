@@ -82,9 +82,9 @@ fi
 if [ ! python -c "import PrettyTable" >/dev/null 2>&1 ]
 then
   if _exists pip ; then
-    pip install PrettyTable
+    pip install prettytable==1.0.1
   else
-    echo ""
+    echo "请手动安装：pip install prettytable==1.0.1"
   fi
 fi
 
