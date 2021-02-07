@@ -192,6 +192,7 @@ def fun_sshkey_file_add():
         if thisUser == "root":
             defaultPath = "/root/.ssh/"
         echo("默认密钥对[私钥]位于：%sid_rsa" % defaultPath)
+        os.system("ls %s" % defaultPath)
         echo("如果您的私钥不是默认路径或默认名字请输入实际的路径和名字。")
         keypath=cyinput("请输入ssh密钥对完整路径[包含证书文件名,如 ~/.ssh/id_rsa]:")
         if len(keypath) == 0:
@@ -276,8 +277,8 @@ def fun_sshkey_file_add():
         else:
             echo("add sshkey identity_file failed,please try again")
         sys.exit(0)
-    except:
-        echo("发生异常：")
+    except Exception as err:
+        echo("发生异常：$s" % err)
 ######### function : fun_sshkey_file_add END#########
 #########Fun:checkHostExists begin #########
 def checkHostExists(id):
