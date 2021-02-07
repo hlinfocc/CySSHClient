@@ -188,27 +188,48 @@ def fun_query_sshkey_list():
 def fun_sshkey_file_add():
     try:
         thisUser = getpass.getuser()
-        defaultPath="/home/%s/.ssh/id_rsa" % thisUser
+        defaultPath="/home/%s/.ssh/" % thisUser
         if thisUser == "root":
-            defaultPath = "/root/.ssh/id_rsa"
-        echo("默认密钥对[私钥]位于：%s" % defaultPath)
+            defaultPath = "/root/.ssh/"
+        echo("默认密钥对[私钥]位于：%sid_rsa" % defaultPath)
         echo("如果您的私钥不是默认路径或默认名字请输入实际的路径和名字。")
         keypath=cyinput("请输入ssh密钥对完整路径[包含证书文件名,如 ~/.ssh/id_rsa]:")
         if len(keypath) == 0:
             if not(os.path.isfile(keypath)):
                 keypath=cyinput("请输入ssh密钥对私钥完整路径[包含证书文件名]:")
                 keypath_TF=True
+                if '/' not in keypath:
+                    keypath = defaultPath + keypath
                 while keypath_TF:
                     if os.path.isfile(keypath):
                         break
                     else:
                         keypath=cyinput("请输入正确的ssh密钥对私钥完整路径[包含证书文件名]:")
+                        if '/' not in keypath:
+                            keypath = defaultPath + keypath
                         if os.path.isfile(keypath):
                             keypath_TF=False
                             break
+        if '/' not in keypath:
+            keypath = defaultPath + keypath
+            if not os.path.isfile(keypath):
+                keypath = cyinput("请输入ssh密钥对私钥完整路径[包含证书文件名]:")
+                keypath_TF = True
+                if '/' not in keypath:
+                    keypath = defaultPath + keypath
+                while keypath_TF:
+                    if os.path.isfile(keypath):
+                        break
+                    else:
+                        keypath = cyinput("请输入正确的ssh密钥对私钥完整路径[包含证书文件名]:")
+                        if '/' not in keypath:
+                            keypath = defaultPath + keypath
+                        if os.path.isfile(keypath):
+                            keypath_TF = False
+                            break
         pubKeypath=""
-        isdefPubPath = cyinput("请确认公钥路径是否和私钥路径一致[default:Y]?[Y/N]:")
-        if len(isdefPubPath) == 0:
+        isdefkeyok = cyinput("请确认公钥路径是否和私钥路径一致[default:Y]?[Y/N]:")
+        if len(isdefkeyok) == 0:
             isdefkeyok = 'y'
         isdefkeyok.lower()
         if isdefkeyok == 'y' or isdefkeyok == 'yes':
@@ -219,20 +240,41 @@ def fun_sshkey_file_add():
                 if not (os.path.isfile(pubKeypath)):
                     pubKeypath = cyinput("请输入ssh密钥对公钥完整路径[包含证书文件名,通常以.pub结尾]:")
                     pubkeypath_TF = True
+                    if '/' not in pubKeypath:
+                        pubKeypath = defaultPath + pubKeypath
                     while pubkeypath_TF:
                         if os.path.isfile(pubKeypath):
                             break
                         else:
                             pubKeypath = cyinput("请输入正确的ssh密钥对公钥完整路径[包含证书文件名,通常以.pub结尾]:")
+                            if '/' not in pubKeypath:
+                                pubKeypath = defaultPath + pubKeypath
+                            if os.path.isfile(pubKeypath):
+                                pubkeypath_TF = False
+                                break
+            if '/' not in pubKeypath:
+                pubKeypath=defaultPath + pubKeypath
+                if not os.path.exists(pubKeypath):
+                    pubKeypath = cyinput("密钥文件不存在请重新输入:")
+                    pubkeypath_TF = True
+                    if '/' not in pubKeypath:
+                        pubKeypath = defaultPath + pubKeypath
+                    while pubkeypath_TF:
+                        if os.path.isfile(pubKeypath):
+                            break
+                        else:
+                            pubKeypath = cyinput("请输入正确的ssh密钥对公钥完整路径[包含证书文件名,通常以.pub结尾]:")
+                            if '/' not in pubKeypath:
+                                pubKeypath = defaultPath + pubKeypath
                             if os.path.isfile(pubKeypath):
                                 pubkeypath_TF = False
                                 break
         #######commit####
         rs_add=pemkey_write2db(keypath,pubKeypath)
         if rs_add:
-            echo("add sshkey pem file successful")
+            echo("add sshkey identity_file successful")
         else:
-            echo("add sshkey pem file failed,please try again")
+            echo("add sshkey identity_file failed,please try again")
         sys.exit(0)
     except:
         echo("发生异常：")
@@ -607,7 +649,10 @@ def syncPubKey2RemoteHost(keyid,port,user,host):
         if o > 0:
             os.system("chmod 600 %s" % privatePath)
             os.system("chmod 600 %s" % pvkpath)
-            sshcopyid="/usr/bin/ssh-copy-id -i %s -p %s %s@%s" % (pvkpath,port,user,host)
+            if port == '22':
+                sshcopyid = "/usr/bin/ssh-copy-id -i %s -o PubkeyAuthentication=no %s@%s" % (pvkpath, user, host)
+            else:
+                sshcopyid="/usr/bin/ssh-copy-id -i %s -p %s -o PubkeyAuthentication=no %s@%s" % (pvkpath,port,user,host)
             rsstatus = os.system(sshcopyid)
             return rsstatus
         else:
