@@ -195,7 +195,7 @@ def fun_sshkey_file_add():
         echo("如果您的私钥不是默认路径或默认名字请输入实际的路径和名字。")
         keypath=cyinput("请输入ssh密钥对完整路径[包含证书文件名,如 ~/.ssh/id_rsa]:")
         if len(keypath) == 0:
-            if not(os.path.isfile(keypath)):
+            if not os.path.isfile(keypath):
                 keypath=cyinput("请输入ssh密钥对私钥完整路径[包含证书文件名]:")
                 keypath_TF=True
                 if '/' not in keypath:
@@ -213,7 +213,7 @@ def fun_sshkey_file_add():
         if '/' not in keypath:
             keypath = defaultPath + keypath
             if not os.path.isfile(keypath):
-                keypath = cyinput("请输入ssh密钥对私钥完整路径[包含证书文件名]:")
+                keypath = cyinput("请输入ssh密钥对私钥完整路径[默认路径可以只输入文件名](如：id_rsa):")
                 keypath_TF = True
                 if '/' not in keypath:
                     keypath = defaultPath + keypath
