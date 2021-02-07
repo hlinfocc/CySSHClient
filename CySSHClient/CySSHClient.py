@@ -277,8 +277,8 @@ def fun_sshkey_file_add():
         else:
             echo("add sshkey identity_file failed,please try again")
         sys.exit(0)
-    except Exception as err:
-        echo("发生异常：$s" % err)
+    except Exception:
+        echo("发生异常：请重试")
 ######### function : fun_sshkey_file_add END#########
 #########Fun:checkHostExists begin #########
 def checkHostExists(id):
