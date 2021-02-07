@@ -162,7 +162,7 @@ def pemkey_write2db(keypath,pubKeypath):
 def checkIdentityFile(kid):
     sql_delkcount = "select count(*) from sshkeylist where id=%d" % (string2int(kid))
     db.execute(sql_delkcount)
-    keycount4hostdb = db.fetchall()[0]
+    keycount4hostdb = db.fetchall()[0][0]
     if keycount4hostdb > 0:
         return True
     else:
@@ -241,7 +241,7 @@ def fun_sshkey_file_add():
 def checkHostExists(id):
     sql_delkcount = "select count(*) from sshhostlist where id=%d" % (string2int(id))
     db.execute(sql_delkcount)
-    rscount4hostdb = db.fetchall()[0]
+    rscount4hostdb = db.fetchall()[0][0]
     if rscount4hostdb > 0:
         return True
     else:
@@ -540,7 +540,7 @@ def update_hostinfo(hostid):
 ########### fun delete host by id start########
 def delhostbyid(hid):
     #判断是否为数字
-    del_isnum=is_num_by_except(hid)
+    del_isnum=checkHostExists(hid)
     if del_isnum:
         sql_del="delete from sshhostlist where id=%d" % (string2int(hid))
         #echo(sql_del)
@@ -552,7 +552,7 @@ def delhostbyid(hid):
             conn.rollback()
             echo("delete host info is failed!")
     else:
-        echo("ERROR：Please enter a number^_^")
+        echo("ERROR：Please enter a true host ID^_^")
 ########### fun delete host by id end########
 ########### fun delete sshkey by id start########
 def delsshkeyfilebyid(kid):
@@ -561,7 +561,7 @@ def delsshkeyfilebyid(kid):
     if del_isnum:
         sql_delkcount="select count(*) from sshhostlist where keypath=%d" % (string2int(kid))
         db.execute(sql_delkcount)
-        keycount4hostdb = db.fetchall()[0]
+        keycount4hostdb = db.fetchall()[0][0]
         if keycount4hostdb > 0 :
             echo("ERROR: The key already exist host list!")
             sys.exit(0)
@@ -685,7 +685,7 @@ def main():
                     dbis_writable()
                     delhostbyid(del_hostid)
                 else:
-                    echo("ERROR：Please enter a number^_^")
+                    echo("ERROR：Please enter the correct host ID^_^")
             elif sys.argv[ii] == '-m' or sys.argv[ii] == 'update' or sys.argv[ii] == 'modify':
                 dbis_writable()
                 fun_query_list()
@@ -697,7 +697,7 @@ def main():
                 if rsup_isnum:
                     update_hostinfo(update_hostid)
                 else:
-                    echo("ERROR：Please enter real host ID^_^")
+                    echo("ERROR：Please enter the correct host ID^_^")
             elif sys.argv[ii] == '-q':
                 fun_query_list()
             elif sys.argv[ii] == '-k':
@@ -716,7 +716,7 @@ def main():
                     #echo("输入是数字")
                     delsshkeyfilebyid(delKeyId)
                 else:
-                    echo("ERROR：Please enter a number^_^")
+                    echo("ERROR：Please enter the correct identity_file ID^_^")
             elif sys.argv[ii] == '-kr':
                 dbis_writable()
                 fun_query_list()
@@ -725,7 +725,7 @@ def main():
                 if rs:
                     syncPubKeyQueryKey(syncHostId)
                 else:
-                    echo("ERROR：请输入正确的主机ID号^_^")
+                    echo("ERROR：Please enter the correct host ID^_^")
             elif is_num_by_except(sys.argv[ii]):
                 rsIsHost = checkHostExists(sys.argv[ii])
                 if rsIsHost:
