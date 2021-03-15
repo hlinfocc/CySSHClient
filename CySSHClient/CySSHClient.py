@@ -10,8 +10,8 @@ import string
 import prettytable as ptb
 import getpass
 ########################################################
-##  Copyright © 红楼信息hlinfo.net All Rights Reserved
-##  2018-05-21
+##  Copyright © hlinfo.net All Rights Reserved
+##  2021-03-15
 ##  Email:service@hlinfo.net
 ########################################################
 
@@ -282,46 +282,53 @@ def fun_sshkey_file_add():
 ######### function : fun_sshkey_file_add END#########
 #########Fun:checkHostExists begin #########
 def checkHostExists(id):
-    sql_delkcount = "select count(*) from sshhostlist where id=%d" % (string2int(id))
-    db.execute(sql_delkcount)
-    rscount4hostdb = db.fetchall()[0][0]
-    if rscount4hostdb > 0:
-        return True
-    else:
+    try:
+        sql_delkcount = "select count(*) from sshhostlist where id=%d" % (string2int(id))
+        db.execute(sql_delkcount)
+        rscount4hostdb = db.fetchall()[0][0]
+        if rscount4hostdb > 0:
+            return True
+        else:
+            return False
+    except Exception:
+        echo("发生异常：请重试")
         return False
 #########Fun:checkHostExists end #########
 #########Query list start #########
 def fun_query_list():
-    db.execute("select * from sshhostlist order by id")
-    res = db.fetchall()
-    #echo(len(res))
-    htb = ptb.PrettyTable()
-    htb.field_names = ["ID", "description","port","host","ssh identity_file"]
-    for row in res:
-        hid = row[0]
-        host = row[1]
-        username = row[2]
-        hhport = row[3]
-        iskey = row[4]
-        keypathid = row[5]
-        hostdesc = row[6]
-        identity_file = ""
-        is_identity_file = ""
-        if iskey == 0:
-            is_identity_file="NO"
+    try:
+        db.execute("select * from sshhostlist order by id")
+        res = db.fetchall()
+        #echo(len(res))
+        htb = ptb.PrettyTable()
+        htb.field_names = ["ID", "description","port","host","ssh identity_file"]
+        for row in res:
+            hid = row[0]
+            host = row[1]
+            username = row[2]
+            hhport = row[3]
+            iskey = row[4]
+            keypathid = row[5]
+            hostdesc = row[6]
             identity_file = ""
-        else:
-            rspkinfo=pemkey_read4db(keypathid)
-            if not rspkinfo[0]:
-                echo("make sshkey pem file failed,please try again")
-                sys.exit(0)
-            identity_file = rspkinfo[2]
-            is_identity_file="YES"
-        htb.add_row(["%d" % hid,"%s" % hostdesc,"%s" % hhport,"%s@%s" % (username,host),"%s" % identity_file])
-        echo('\033[1;44;37m','')
-        htb.align["description"] = "l"
-    echo(htb)
-    echo('\033[0m','')
+            is_identity_file = ""
+            if iskey == 0:
+                is_identity_file="NO"
+                identity_file = ""
+            else:
+                rspkinfo=pemkey_read4db(keypathid)
+                if not rspkinfo[0]:
+                    echo("make sshkey pem file failed,please try again")
+                    sys.exit(0)
+                identity_file = rspkinfo[2]
+                is_identity_file="YES"
+            htb.add_row(["%d" % hid,"%s" % hostdesc,"%s" % hhport,"%s@%s" % (username,host),"%s" % identity_file])
+            echo('\033[1;44;37m','')
+            htb.align["description"] = "l"
+        echo(htb)
+        echo('\033[0m','')
+    except Exception:
+        echo("发生异常:fun_query_list")
 #########Query list end #########
 ######### function query one by ID begin############
 def fun_queryoneById(hostid):
@@ -404,7 +411,7 @@ def add_hostinfo():
                     keypath=cyinput("请输入正确的密钥对ID:")
                     rskid_isnum=is_num_by_except(keypath)
                     if rskid_isnum:
-                        break;
+                        break
             else:
                 keypath=cyinput("请输入ssh密钥对完整路径[包含文件名]:")
         else:
@@ -512,7 +519,7 @@ def update_hostinfo(hostid):
                     rskid_isnum=is_num_by_except(keypath_id)
                     if rskid_isnum:
                         keypath = keypath_id
-                        break;
+                        break
             else:
                 keypath=cyinput("请输入ssh免密码登录密钥对私钥完整路径[包含文件名,通常为~/.ssh/id_rsa]:")
         else:
@@ -683,7 +690,7 @@ def syncPubKeyQueryKey(hostid):
             resultKey = checkIdentityFile(keypath_id)
             if resultKey:
                 sshkeyid = keypath_id
-                break;
+                break
         rsok = syncPubKey2RemoteHost(sshkeyid,hhport,username,host)
         if rsok == 0:
             sql_update = "update sshhostlist set iskey=%s, keypath='%s' where id=%s" % (1, sshkeyid, hostid)
@@ -739,7 +746,7 @@ def main():
                 #######
                 #判断是否为数字
                 #rsup_isnum=is_num_by_except(update_hostid)
-                rsup_isnum=checkHostExists(syncHostId)
+                rsup_isnum=checkHostExists(update_hostid)
                 if rsup_isnum:
                     update_hostinfo(update_hostid)
                 else:

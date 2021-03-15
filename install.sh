@@ -79,14 +79,18 @@ then
   curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
   python get-pip.py
 fi
-if [ ! python -c "import PrettyTable" >/dev/null 2>&1 ]
-then
-  if _exists pip ; then
-    pip install prettytable==1.0.1
-  else
-    echo "请手动安装：pip install prettytable==1.0.1"
-  fi
+if _exists pip ; then
+  pip install prettytable
+  pip install pysqlite3
 fi
+#if [ ! python -c "import PrettyTable" >/dev/null 2>&1 ]
+#then
+#  if _exists pip ; then
+#    pip install prettytable
+#  else
+#    echo "请手动安装：pip install prettytable"
+#  fi
+#fi
 
 dqwz=$(dirname `readlink -f $0`)
 echo "Install CySSHClient Begin"
