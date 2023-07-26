@@ -79,9 +79,10 @@ then
   curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
   python get-pip.py
 fi
-if _exists pip ; then
-  pip install prettytable
-  pip install pysqlite3
+if _exists pip3 ; then
+  pip3 install prettytable
+  pip3 install pysqlite3
+  pip3 install argparse
 fi
 #if [ ! python -c "import PrettyTable" >/dev/null 2>&1 ]
 #then
@@ -106,7 +107,7 @@ else
   \cp -rf ${dqwz}/CySSHClient/init.py /usr/local/CySSHClient/
 fi
 
-python /usr/local/CySSHClient/init.py
+python3 /usr/local/CySSHClient/init.py
 
 ln -sf /usr/local/CySSHClient/CySSHClient.py /usr/bin/cyssh
 echo "install CySSHClient successful!"
